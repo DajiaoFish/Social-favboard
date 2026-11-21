@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Social Favboard",
+  "version": "1.0.8",
+  "description": "在你自己的浏览器里读取抖音 / B站 / 小红书的喜欢与收藏，发送给 Obsidian 插件整理成白板。不额外请求任何平台接口。",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "https://www.douyin.com/*",
+    "https://www.bilibili.com/*",
+    "https://space.bilibili.com/*",
+    "https://www.xiaohongshu.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "social-favboard@dajaofish",
+      "strict_min_version": "128.0"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.douyin.com/*",
+        "https://www.bilibili.com/*",
+        "https://space.bilibili.com/*",
+        "https://www.xiaohongshu.com/*"
+      ],
+      "js": ["inject.js"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.douyin.com/*",
+        "https://www.bilibili.com/*",
+        "https://space.bilibili.com/*",
+        "https://www.xiaohongshu.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Social Favboard"
+  }
+}

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="400" viewBox="0 0 860 400" font-family="-apple-system, Segoe UI, Microsoft YaHei, sans-serif">
+  <rect width="860" height="400" fill="#ffffff"/>
+
+  <!-- 左侧：浏览器 -->
+  <rect x="30" y="40" width="300" height="300" rx="12" fill="#f7f8fa" stroke="#d8dbe0" stroke-width="1.5"/>
+  <text x="180" y="72" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">你的浏览器（Edge / Chrome）</text>
+  <text x="180" y="93" text-anchor="middle" font-size="12" fill="#6b7280">真实登录态 · 真实指纹</text>
+
+  <rect x="52" y="112" width="256" height="48" rx="8" fill="#ffffff" stroke="#c9ced6"/>
+  <text x="64" y="132" font-size="13" font-weight="500" fill="#1f2328">主世界钩子</text>
+  <text x="64" y="149" font-size="11" fill="#6b7280">旁听页面自己发出的接口响应</text>
+
+  <rect x="52" y="170" width="256" height="48" rx="8" fill="#ffffff" stroke="#c9ced6"/>
+  <text x="64" y="190" font-size="13" font-weight="500" fill="#1f2328">DOM 扫描（兜底）</text>
+  <text x="64" y="207" font-size="11" fill="#6b7280">只在收藏 / 喜欢页读取已渲染卡片</text>
+
+  <rect x="52" y="228" width="256" height="48" rx="8" fill="#ffffff" stroke="#c9ced6"/>
+  <text x="64" y="248" font-size="13" font-weight="500" fill="#1f2328">暂停开关</text>
+  <text x="64" y="265" font-size="11" fill="#6b7280">一键停止，连页面监听都断开</text>
+
+  <rect x="52" y="286" width="256" height="36" rx="8" fill="#eef7f3" stroke="#a8d5c4"/>
+  <text x="180" y="309" text-anchor="middle" font-size="11.5" fill="#17845f">全程不额外请求任何平台接口</text>
+
+  <!-- 中间通道 -->
+  <line x1="332" y1="180" x2="440" y2="180" stroke="#9aa3ad" stroke-width="1.5"/>
+  <polygon points="440,180 432,176 432,184" fill="#9aa3ad"/>
+  <line x1="440" y1="220" x2="332" y2="220" stroke="#9aa3ad" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <polygon points="332,220 340,216 340,224" fill="#9aa3ad"/>
+
+  <rect x="330" y="128" width="116" height="80" rx="8" fill="#ffffff" stroke="#c9ced6"/>
+  <text x="388" y="150" text-anchor="middle" font-size="11.5" font-weight="600" fill="#1f2328">本机回环</text>
+  <text x="388" y="169" text-anchor="middle" font-size="10.5" fill="#6b7280">127.0.0.1</text>
+  <text x="388" y="185" text-anchor="middle" font-size="10.5" fill="#6b7280">27123–27128</text>
+  <text x="388" y="201" text-anchor="middle" font-size="10.5" fill="#6b7280">带配对令牌</text>
+
+  <!-- 右侧：Obsidian -->
+  <rect x="454" y="40" width="376" height="300" rx="12" fill="#f7f8fa" stroke="#d8dbe0" stroke-width="1.5"/>
+  <text x="642" y="72" text-anchor="middle" font-size="15" font-weight="600" fill="#1f2328">Obsidian 插件</text>
+  <text x="642" y="93" text-anchor="middle" font-size="12" fill="#6b7280">只在本地运行，不访问网络</text>
+
+  <rect x="476" y="112" width="332" height="48" rx="8" fill="#ffffff" stroke="#c9ced6"/>
+  <text x="488" y="132" font-size="13" font-weight="500" fill="#1f2328">本地接收端口</text>
+  <text x="488" y="149" font-size="11" fill="#6b7280">收到数据后入队，按单次上限分批</text>
+
+  <rect x="476" y="170" width="332" height="48" rx="8" fill="#ffffff" stroke="#c9ced6"/>
+  <text x="488" y="190" font-size="13" font-weight="500" fill="#1f2328">下载封面 · 生成卡片</text>
+  <text x="488" y="207" font-size="11" fill="#6b7280">串行下载，一张下完再下一张</text>
+
+  <rect x="476" y="228" width="332" height="48" rx="8" fill="#ffffff" stroke="#c9ced6"/>
+  <text x="488" y="248" font-size="13" font-weight="500" fill="#1f2328">写入白板</text>
+  <text x="488" y="265" font-size="11" fill="#6b7280">散开铺在空白处，由你拖动分组</text>
+
+  <rect x="476" y="286" width="332" height="36" rx="8" fill="#eef4fb" stroke="#b8cfe6"/>
+  <text x="642" y="309" text-anchor="middle" font-size="11.5" fill="#185fa5">数据不经过任何第三方服务器</text>
+
+  <!-- 底部说明 -->
+  <text x="430" y="372" text-anchor="middle" font-size="12" fill="#6b7280">两个本机部件，一条回环通道：浏览器负责取，Obsidian 负责写</text>
+</svg>

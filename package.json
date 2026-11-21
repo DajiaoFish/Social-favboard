@@ -1,0 +1,19 @@
+{
+  "name": "social-favboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "收藏夹画板：把社交媒体的喜欢与收藏（抖音 / B站 / 小红书）整理成 Obsidian Canvas 白板卡片",
+  "author": "DajiaoFish",
+  "scripts": {
+    "test": "node test/e2e.test.js"
+  },
+  "keywords": [
+    "obsidian",
+    "obsidian-plugin",
+    "canvas",
+    "social-media",
+    "favorites",
+    "bookmarks"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,31 @@
+# 依赖
+node_modules/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志与临时文件
+*.log
+*.tmp
+*.bak
+tmp-*.txt
+
+# === 用户数据，绝对不能进仓库 ===
+# Obsidian 插件运行时写出的配置（含「已同步」记录，即你的收藏 id 列表）
+**/data.json
+# 下载的封面图
+video-covers/
+morepicture/
+
+# 本地白板备份
+*.canvas.bak
+*.backup.canvas
+
+# 工作区私有目录
+.workbuddy/
+项目复刻提示词.md
+Skill制作提示词.md

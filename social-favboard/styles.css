@@ -1,0 +1,251 @@
+/* ===== Social Favboard ===== */
+
+.sfb-modal .sfb-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.65;
+  margin: 12px 0 0;
+}
+
+/* 连接状态条 */
+.sfb-modal .sfb-conn {
+  font-size: 12.5px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+
+.sfb-modal .sfb-conn.ok {
+  border-color: rgba(29, 158, 117, 0.45);
+  background: rgba(29, 158, 117, 0.08);
+  color: #1d9e75;
+}
+
+.sfb-modal .sfb-conn.bad {
+  border-color: rgba(226, 75, 74, 0.45);
+  background: rgba(226, 75, 74, 0.07);
+  color: #c0392b;
+}
+
+/* 行 */
+.sfb-modal .sfb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.sfb-modal .sfb-row label {
+  font-size: 13px;
+  color: var(--text-muted);
+  min-width: 68px;
+  flex: none;
+}
+
+.sfb-modal .sfb-pending {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.sfb-modal select.sfb-select {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 13px;
+}
+
+/* 按钮区 */
+.sfb-modal .sfb-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.sfb-modal button.sfb-go {
+  flex: 1;
+  padding: 8px 18px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-on-accent);
+  background: var(--interactive-accent);
+}
+
+.sfb-modal button.sfb-go:hover {
+  background: var(--interactive-accent-hover);
+}
+
+.sfb-modal button.sfb-go:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sfb-modal button.sfb-btn-ghost {
+  padding: 8px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px solid var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.sfb-modal button.sfb-btn-ghost:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+/* ===== 设置页 ===== */
+
+.sfb-setting-status {
+  font-size: 13px;
+  padding: 9px 13px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+}
+
+.sfb-setting-status.ok {
+  border-color: rgba(29, 158, 117, 0.45);
+  background: rgba(29, 158, 117, 0.08);
+  color: #1d9e75;
+}
+
+.sfb-setting-status.bad {
+  border-color: rgba(226, 75, 74, 0.45);
+  background: rgba(226, 75, 74, 0.07);
+  color: #c0392b;
+}
+
+/* 主题列表 */
+.sfb-topic-list {
+  margin-bottom: 10px;
+}
+
+.sfb-topic-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.sfb-topic-name {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 13px;
+}
+
+.sfb-topic-name:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+/* 关键词规则行 */
+.sfb-rule-list {
+  margin-bottom: 10px;
+}
+
+.sfb-rule-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.sfb-rule-name,
+.sfb-rule-keywords {
+  padding: 5px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 13px;
+}
+
+.sfb-rule-name {
+  flex: 0 0 110px;
+  min-width: 0;
+}
+
+.sfb-rule-keywords {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sfb-rule-name:focus,
+.sfb-rule-keywords:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+@media (max-width: 560px) {
+  .sfb-rule-row {
+    flex-wrap: wrap;
+  }
+  .sfb-rule-name,
+  .sfb-rule-keywords {
+    flex: 1 1 100%;
+  }
+}
+
+.sfb-topic-color {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 13px;
+  flex: none;
+}
+
+.sfb-topic-del {
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12.5px;
+  border: 1px solid var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+  flex: none;
+}
+
+.sfb-topic-del:hover {
+  background: rgba(226, 75, 74, 0.1);
+  border-color: rgba(226, 75, 74, 0.4);
+  color: #c0392b;
+}
+
+.sfb-add-topic {
+  padding: 7px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px dashed var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+  width: 100%;
+}
+
+.sfb-add-topic:hover {
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+}
