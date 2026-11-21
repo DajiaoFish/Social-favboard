@@ -235,6 +235,25 @@ Only the currently open one is scanned; open each folder in turn.
 
 ---
 
+## Want more platforms? PRs welcome
+
+> **想支持更多平台（油管 / Twitter-X / Instagram…）？欢迎提交 PR！**
+
+Only Douyin, Bilibili and Xiaohongshu are supported right now. If you'd like YouTube, Twitter/X or others, don't ask for permission — fork the repo, add it and open a pull request.
+
+The integration points are concentrated in `browser-extension/content.js`:
+
+1. Platform detection: the `PLAT` map (by domain);
+2. Page whitelist: only allow the platform's **favorites/likes list pages**;
+3. API response parsing (primary) + DOM scan selectors (fallback);
+4. Link generation (that platform's original-post URL format).
+
+The Obsidian plugin barely needs changes — it doesn't care where content came from.
+
+**The three iron rules apply to every new platform**: listen only to the page's own requests, send no extra requests, never touch login states. PRs violating these will be rejected outright. Run `npm test` before submitting, and see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
 ## On compliance and risk
 
 Stated plainly, no sugarcoating:
