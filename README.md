@@ -10,7 +10,31 @@
   <img src="docs/architecture.svg" alt="工作原理" width="100%">
 </p>
 
-> 📷 建议在 `docs/preview.png` 放一张你白板的真实截图，会出现在这里。
+## 实际效果
+
+**按关键词自动分类**——卡片直接落进对应分组框，框不够高会自己变高：
+
+<p align="center">
+  <img src="docs/preview.png" alt="按关键词自动分组" width="100%">
+</p>
+
+**刷出来的量**——几百张卡片铺满白板，互相之间零重叠：
+
+<p align="center">
+  <img src="docs/preview-2.jpg" alt="大量卡片铺满白板" width="100%">
+</p>
+
+**手动模式也不乱**——散卡围绕主题连线，拖动、连接全凭你：
+
+<p align="center">
+  <img src="docs/preview-3.png" alt="手动连线布局" width="100%">
+</p>
+
+**同一块板还能当灵感 moodboard 用**——截图、文章、App 参考混排：
+
+<p align="center">
+  <img src="docs/preview-4.png" alt="灵感 moodboard 用法" width="100%">
+</p>
 
 ---
 

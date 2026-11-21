@@ -10,7 +10,31 @@ Cards are spread across empty space, and **you do the sorting yourself**: drag t
   <img src="docs/architecture.svg" alt="How it works" width="100%">
 </p>
 
-> 📷 Tip: put a real screenshot of your board at `docs/preview.png` and it will show up here.
+## Real-world results
+
+**Keyword auto-classification** — cards land straight into their group frames, which grow taller as needed:
+
+<p align="center">
+  <img src="docs/preview.png" alt="Keyword auto-grouping" width="100%">
+</p>
+
+**Volume** — hundreds of cards filling the board with zero overlaps:
+
+<p align="center">
+  <img src="docs/preview-2.jpg" alt="Board filled with cards" width="100%">
+</p>
+
+**Manual mode stays tidy too** — loose cards connected around a topic; dragging and linking are all yours:
+
+<p align="center">
+  <img src="docs/preview-3.png" alt="Manual linked layout" width="100%">
+</p>
+
+**The same board doubles as an inspiration moodboard** — screenshots, articles and app references mixed together:
+
+<p align="center">
+  <img src="docs/preview-4.png" alt="Moodboard usage" width="100%">
+</p>
 
 ---
 
