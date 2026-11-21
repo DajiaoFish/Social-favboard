@@ -6,6 +6,16 @@ Thanks for wanting to contribute. The rules below are short — a minute of read
 
 ---
 
+## Currently supported platforms
+
+This project currently supports three platforms: **Douyin** (likes/collections), **Bilibili** (favorites folders) and **Xiaohongshu** (collected/liked).
+
+If you want to add **YouTube**, **Twitter/X**, Instagram or any other platform — you're very welcome, and you can start right away: fork this repo, add your platform following the integration points below, make the tests pass, and open a PR. The existing three platforms are three ready-made examples; yours follows exactly the same path.
+
+Before you start, read the three iron rules — they decide whether a PR gets merged.
+
+---
+
 ## The Three Iron Rules
 
 No new code, whatever platform or feature it touches, may violate:
