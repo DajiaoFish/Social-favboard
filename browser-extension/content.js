@@ -203,6 +203,7 @@
             cover: coverList.length ? String(coverList[coverList.length - 1]).replace(/^http:/, 'https:') : '',
             url: `https://www.douyin.com/video/${it.aweme_id}`,
             duration: v.duration ? Math.round(v.duration / 1000) : 0,
+            tags: (String(it.desc || '').match(/#[^\s#]+/g) || []).map((s) => s.slice(1)).slice(0, 10),
           });
         }
       } else if (/fav\/resource\/list/i.test(url)) {
@@ -218,6 +219,7 @@
             cover: String(it.cover || '').replace(/^http:/, 'https:'),
             url: `https://www.bilibili.com/video/${it.bvid}`,
             duration: Number(it.duration) || 0,
+            tags: [].concat(it.tags || it.tag_list || []).map((x) => (typeof x === 'string' ? x : x && x.name)).filter(Boolean).slice(0, 10),
           });
         }
       } else if (/note\/user_posted|user\/(collected|liked)|note\/feed|liked_list|collect_list|collected|liked/i.test(url)) {
@@ -245,6 +247,7 @@
             cover: String(cover).replace(/^http:/, 'https:'),
             url: xhsUrl(String(id), '', token, source),
             duration: 0,
+            tags: [].concat((it.note_card && it.note_card.tag_list) || it.tag_list || it.tags || []).map((x) => (typeof x === 'string' ? x : x && x.name)).filter(Boolean).slice(0, 10),
           });
         }
       }

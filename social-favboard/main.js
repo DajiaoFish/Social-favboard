@@ -28,6 +28,26 @@ if (!nodeHttp) {
 }
 
 /* =========================================================
+ * Node 内置 fs / path（用于导入 Skill 生成的完整白板）
+ * ========================================================= */
+let nodeFs = null;
+let nodePath = null;
+try {
+  nodeFs = require('fs');
+  nodePath = require('path');
+} catch (e) {
+  /* ignore */
+}
+if (!nodeFs || !nodePath) {
+  try {
+    nodeFs = (window.require && window.require('fs')) || nodeFs;
+    nodePath = (window.require && window.require('path')) || nodePath;
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/* =========================================================
  * 常量
  * ========================================================= */
 const UA_DESKTOP =
@@ -62,6 +82,11 @@ const DEFAULT_SETTINGS = {
   /* 「其他」分组（没命中任何关键词的卡片）的颜色 */
   otherGroupColor: '5',
   targetCanvas: '',
+  /* Skill 生成的白板文件（绝对路径），供“从 Skill 输出文件导入白板”命令使用 */
+  importSource: '',
+  /* 自动监控 Skill 输出文件，变化后自动写入默认白板 */
+  autoImport: false,
+  /* Skill 排版方式已移除，统一使用生成文件后导入 */
   coverFolder: 'video-covers',
   cardWidth: 340,
   maxPerRow: 4,
@@ -69,7 +94,7 @@ const DEFAULT_SETTINGS = {
   gapY: 90,
   textHeight: 176,
   batchLimit: 30,
-  autoWrite: true,
+  autoWrite: false,
   dedupe: true,
   bridgeToken: '',
   synced: { douyin: [], bilibili: [], xhs: [] },
@@ -369,6 +394,9 @@ function buildCardText(card, topic) {
   const day = fmtDay(card.at);
   if (day) lines.push(`收录 ${day}`);
   if (topic && topic.name) lines.push(`#${topic.name.replace(/\s+/g, '')}`);
+  if (Array.isArray(card.tags) && card.tags.length) {
+    lines.push(card.tags.slice(0, 10).map((t) => '#' + String(t).replace(/\s+/g, '')).join(' '));
+  }
   const isXhs = card.platform === 'xhs';
   const hasTok = isXhs && /xsec_token=/i.test(card.url || '');
   if (isXhs && card.title) {
@@ -1061,15 +1089,7 @@ class CollectModal extends Modal {
     pendRow.createEl('label', { text: '待写入' });
     this.pendingEl = pendRow.createEl('b', { cls: 'sfb-pending', text: '0 条' });
 
-    // 主题
-    const topicRow = contentEl.createDiv({ cls: 'sfb-row' });
-    topicRow.createEl('label', { text: '归入主题' });
-    this.topicSel = topicRow.createEl('select', { cls: 'sfb-select' });
-    for (const t of this.plugin.settings.topics) {
-      const o = this.topicSel.createEl('option', { text: t.name });
-      o.value = t.id;
-    }
-    this.topicSel.value = this.plugin.settings.defaultTopicId;
+    // 主题选择已移除：卡片统一使用默认颜色，归类交给 Skill
 
     // 白板
     const canvasRow = contentEl.createDiv({ cls: 'sfb-row' });
@@ -1139,8 +1159,7 @@ class CollectModal extends Modal {
       new Notice('请先选择一个白板');
       return;
     }
-    const topicId = this.topicSel.value;
-    this.plugin.settings.defaultTopicId = topicId;
+
     this.plugin.settings.targetCanvas = canvasPath;
     await this.plugin.saveSettings();
 
@@ -1222,6 +1241,16 @@ class VccSettingTab extends PluginSettingTab {
       })
     );
 
+    new Setting(containerEl)
+      .setName('新采集的视频自动写入白板')
+      .setDesc('开启后，浏览器扩展收到新采集的视频会自动追加到「默认写入白板」；关闭则只进队列，需要点上面的「立即写入」')
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.autoWrite).onChange(async (v) => {
+          this.plugin.settings.autoWrite = v;
+          await this.plugin.saveSettings();
+        })
+      );
+
     new Setting(containerEl).setName('清空队列').addButton((b) =>
       b.setButtonText('清空').onClick(() => {
         this.plugin.queue.clear();
@@ -1230,97 +1259,11 @@ class VccSettingTab extends PluginSettingTab {
       })
     );
 
-    /* ---- 主题 ---- */
-    containerEl.createEl('h3', { text: '主题' });
-    containerEl.createEl('p', {
-      cls: 'setting-item-description',
-      text:
-        '你自己定的分类，随时增删改。白板原生只有 6 种颜色，主题多于 6 个时颜色会重复，靠卡片上的 #主题名 区分。' +
-        '按关键词自动分类时，卡片用哪个主题由关键词规则决定，这里的默认主题只在手动模式下生效。',
-    });
+    /* 主题、分类方式、关键词规则已移除：统一由 Skill 排版处理 */
 
-    const topicBox = containerEl.createDiv({ cls: 'sfb-topic-list' });
-    this.renderTopics(topicBox);
+    /* 分类类型改为独立标签页，主设置页不再调用 */
 
-    const addBtn = containerEl.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加主题' });
-    addBtn.addEventListener('click', async () => {
-      const n = this.plugin.settings.topics.length;
-      this.plugin.settings.topics.push({
-        id: 'topic_' + uid().slice(0, 8),
-        name: '新主题 ' + (n + 1),
-        color: '5',
-      });
-      await this.plugin.saveSettings();
-      this.renderTopics(topicBox);
-    });
-
-    /* ---- 自动分类 ---- */
-    containerEl.createEl('h3', { text: '分类' });
-    containerEl.createEl('p', {
-      cls: 'setting-item-description',
-      text:
-        '手动（默认）：卡片散铺在白板上，你自己拖到哪儿算哪儿。' +
-        '关键词：写进来的时候按标题里的词自动放进对应的分组框，分组框带颜色。' +
-        '两边都可以随时切，已写好的卡片不会因为你切换而自己乱跑。',
-    });
-
-    new Setting(containerEl)
-      .setName('分类方式')
-      .setDesc('默认手动。改成关键词后，新卡片会被直接放进取色框里。')
-      .addDropdown((d) => {
-        d.addOption('manual', '手动（自己拖）');
-        d.addOption('keyword', '按关键词自动分类');
-        d.setValue(this.plugin.settings.classifyMode || 'manual');
-        d.onChange(async (v) => {
-          this.plugin.settings.classifyMode = v;
-          await this.plugin.saveSettings();
-          this.display();
-        });
-      });
-
-    containerEl.createEl('h4', { text: '关键词规则' });
-    containerEl.createEl('p', {
-      cls: 'setting-item-description',
-      text:
-        '一条规则 = 一个分组框。关键词用逗号隔开，标题里出现任意一个就算命中；按从上到下的顺序匹配，先命中的赢。' +
-        '一个都没命中的，会进「其他」框。',
-    });
-
-    const ruleBox = containerEl.createDiv({ cls: 'sfb-rule-list' });
-    this.renderRules(ruleBox);
-
-    const addRule = containerEl.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加分类' });
-    addRule.addEventListener('click', async () => {
-      const n = this.plugin.settings.classifyRules.length;
-      this.plugin.settings.classifyRules.push({
-        id: 'rule_' + uid().slice(0, 8),
-        name: '分类 ' + (n + 1),
-        keywords: '',
-        color: CANVAS_COLORS[n % CANVAS_COLORS.length].v,
-        enabled: true,
-      });
-      await this.plugin.saveSettings();
-      this.renderRules(ruleBox);
-    });
-
-    new Setting(containerEl)
-      .setName('立即整理当前白板')
-      .setDesc(
-        '把默认白板里已有的卡片按上面的规则重新排一遍，并套上分组框。' +
-          '只会搬动本项目生成的卡片，你自己画的卡片、手写的文字不会被动到。'
-      )
-      .addButton((b) =>
-        b
-          .setButtonText('整理')
-          .setCta()
-          .onClick(async () => {
-            b.setButtonText('整理中…').setDisabled(true);
-            const r = await this.plugin.organize(this.plugin.settings.targetCanvas);
-            b.setButtonText('整理').setDisabled(false);
-            new Notice(r.message, 6000);
-            this.display();
-          })
-      );
+    /* 分类 / 关键词规则 / 立即整理 已移除 */
 
     /* ---- 卡片外观 ---- */
     containerEl.createEl('h3', { text: '卡片' });
@@ -1343,14 +1286,35 @@ class VccSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('收到后自动写入')
-      .setDesc('关闭后，内容只进队列，需要你在收集面板里手动点写入')
+      .setName('Skill 输出文件')
+      .setDesc(
+        '绝对路径。Skill 排好版生成的白板文件；在命令面板运行“从 Skill 输出文件导入白板”时，会把它写进上面的默认白板。留空则不自动导入。'
+      )
+      .addText((t) =>
+        t
+          .setPlaceholder('C:\\...\\organized.canvas')
+          .setValue(this.plugin.settings.importSource || '')
+          .onChange(async (v) => {
+            this.plugin.settings.importSource = v.trim();
+            await this.plugin.saveSettings();
+          })
+      );
+
+    /* Skill 排版方式已移除：统一使用「生成文件后导入」 */
+
+    new Setting(containerEl)
+      .setName('Skill整理排版白板-自动覆盖白板（会覆盖用户自己的排版）')
+      .setDesc(
+        '开启后，Skill 每次重新生成排版文件，插件会在约 2 秒内用它整块替换「默认写入白板」；替换前自动备份。'
+      )
       .addToggle((t) =>
-        t.setValue(this.plugin.settings.autoWrite).onChange(async (v) => {
-          this.plugin.settings.autoWrite = v;
+        t.setValue(!!this.plugin.settings.autoImport).onChange(async (v) => {
+          this.plugin.settings.autoImport = v;
           await this.plugin.saveSettings();
         })
       );
+
+    /* 「新采集的视频自动写入白板」已移到「待写入队列」区块 */
 
     new Setting(containerEl)
       .setName('封面目录')
@@ -1490,6 +1454,131 @@ class VccSettingTab extends PluginSettingTab {
       text:
         '需要说明：这仍属于非官方途径，无法保证平台条款意义上的完全合规，也无法保证平台改版后始终可用。是否使用请自行判断。',
     });
+
+    this.renderConcepts(containerEl);
+  }
+
+  renderConcepts(containerEl) {
+    if (!this.plugin.conceptText && !this.conceptLoading) {
+      this.conceptLoading = true;
+      this.plugin.loadConceptText().then(() => {
+        this.conceptLoading = false;
+        this.display();
+      });
+      return;
+    }
+    containerEl.createEl('h3', { text: '分类类型' });
+    containerEl.createEl('p', {
+      cls: 'setting-item-description',
+      text: '体 / 面来自「分类类型-灵感体系.md」。点体名展开或收起它下面的面。',
+    });
+    const box = containerEl.createDiv();
+    const entities = [];
+    let cur = null;
+    for (const line of String(this.plugin.conceptText || '').split('\n')) {
+      const m1 = line.match(/^##\s*体[:：]\s*(.+)$/);
+      if (m1) {
+        cur = { name: m1[1].trim(), facets: [] };
+        entities.push(cur);
+        continue;
+      }
+      const m2 = line.match(/^-\s*面[:：]\s*(.+)$/);
+      if (m2 && cur) cur.facets.push(m2[1].trim());
+    }
+    for (const e of entities) {
+      const head = box.createDiv();
+      head.style.cursor = 'pointer';
+      head.style.fontWeight = '600';
+      head.setText(`▸ ${e.name}（${e.facets.length} 个面）`);
+      const body = box.createDiv();
+      body.style.display = 'none';
+      body.style.paddingLeft = '16px';
+      for (const f of e.facets) body.createDiv({ text: '· ' + f });
+      head.addEventListener('click', () => {
+        const opened = body.style.display !== 'none';
+        body.style.display = opened ? 'none' : 'block';
+        head.setText(`${opened ? '▸' : '▾'} ${e.name}（${e.facets.length} 个面）`);
+      });
+      const fb = body.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加面' });
+      fb.addEventListener('click', () => {
+        const inp = body.createEl('input', { cls: 'sfb-input', attr: { placeholder: '输入面名称，回车保存' } });
+        inp.style.width = '100%';
+        inp.focus();
+        let saved = false;
+        const save = async () => {
+          if (saved) return;
+          saved = true;
+          const name = inp.value.trim();
+          if (!name) {
+            inp.remove();
+            return;
+          }
+          let t = '';
+          try {
+            t = await this.plugin.app.vault.adapter.read('分类类型-灵感体系.md');
+          } catch (err) {
+            /* ignore */
+          }
+          const lines = String(t).split('\n');
+          const idx = lines.findIndex((l) => l.trim() === `## 体：${e.name}`);
+          if (idx < 0) return;
+          let end = lines.length;
+          for (let i = idx + 1; i < lines.length; i++) {
+            if (/^##\s*体[:：]/.test(lines[i])) {
+              end = i;
+              break;
+            }
+          }
+          lines.splice(end, 0, `- 面：${name}`);
+          await this.plugin.app.vault.adapter.write('分类类型-灵感体系.md', lines.join('\n'));
+          await this.plugin.loadConceptText();
+          this.display();
+        };
+        inp.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') {
+            ev.preventDefault();
+            save();
+          }
+        });
+        inp.addEventListener('blur', save);
+      });
+    }
+    if (!entities.length) {
+      box.createEl('p', { cls: 'setting-item-description', text: '还没有体。' });
+    }
+    const btn = box.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加体' });
+    btn.addEventListener('click', () => {
+      const inp = box.createEl('input', { cls: 'sfb-input', attr: { placeholder: '输入体名称，回车保存' } });
+      inp.style.width = '100%';
+      inp.focus();
+      let saved = false;
+      const save = async () => {
+        if (saved) return;
+        saved = true;
+        const name = inp.value.trim();
+        if (!name) {
+          inp.remove();
+          return;
+        }
+        let t = '';
+        try {
+          t = await this.plugin.app.vault.adapter.read('分类类型-灵感体系.md');
+        } catch (err) {
+          /* ignore */
+        }
+        if (!t.trim()) t = '# 分类类型-灵感体系\n';
+        await this.plugin.app.vault.adapter.write('分类类型-灵感体系.md', t.trimEnd() + `\n\n## 体：${name}\n`);
+        await this.plugin.loadConceptText();
+        this.display();
+      };
+      inp.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          save();
+        }
+      });
+      inp.addEventListener('blur', save);
+    });
   }
 
   renderStatus() {
@@ -1619,6 +1708,9 @@ module.exports = class VideoCardCollector extends Plugin {
   async onload() {
     await this.loadSettings();
 
+    this.conceptText = '';
+    await this.loadConceptText();
+
     this.queue = new Map();
     this.bridge = new LocalBridge(this);
     this.writeTimer = null;
@@ -1643,21 +1735,217 @@ module.exports = class VideoCardCollector extends Plugin {
       },
     });
 
+    /* 关键词整理命令已移除：归类由 Skill 负责 */
+
     this.addCommand({
-      id: 'organize-by-keywords',
-      name: '按关键词整理当前白板',
+      id: 'import-skill-canvas',
+      name: '从 Skill 输出文件导入白板',
       callback: async () => {
-        const r = await this.organize(this.settings.targetCanvas);
-        new Notice(r.message, 6000);
+        await this.importSkillCanvas();
       },
     });
 
+    this.lastImportMtime = 0;
+    this.registerInterval(window.setInterval(() => {
+      if (!this.settings.autoImport) return;
+      if (!nodeFs || !nodePath) return;
+      const source = (this.settings.importSource || '').trim();
+      if (!source) return; /* 未设置路径时跳过自动导入 */
+      if (!nodeFs.existsSync(source)) return;
+      let mtime = 0;
+      try {
+        mtime = nodeFs.statSync(source).mtimeMs;
+      } catch (e) {
+        return;
+      }
+      if (!this.lastImportMtime) {
+        this.lastImportMtime = mtime;
+        return;
+      }
+      if (mtime === this.lastImportMtime) return;
+      this.lastImportMtime = mtime;
+      this.importSkillCanvas();
+    }, 2000));
+
     this.addSettingTab(new VccSettingTab(this.app, this));
+    /* 独立分类标签页已移除，分类类型在主设置页最下方 */
   }
 
   onunload() {
     if (this.bridge) this.bridge.stop();
     if (this.writeTimer) clearTimeout(this.writeTimer);
+  }
+
+
+  async loadConceptText() {
+    try {
+      const f = this.app.vault.getAbstractFileByPath('分类类型-灵感体系.md');
+      this.conceptText = f ? await this.app.vault.read(f) : '';
+    } catch (e) {
+      this.conceptText = '';
+    }
+  }
+
+  renderConcepts(containerEl) {
+    containerEl.createEl('h3', { text: '分类类型' });
+    containerEl.createEl('p', {
+      cls: 'setting-item-description',
+      text: '点体名展开或收起它下面的面。',
+    });
+    const box = containerEl.createDiv();
+    const entities = [];
+    let cur = null;
+    for (const line of String(this.conceptText || '').split('\n')) {
+      const m1 = line.match(/^##\s*体[:：]\s*(.+)$/);
+      if (m1) {
+        cur = { name: m1[1].trim(), facets: [] };
+        entities.push(cur);
+        continue;
+      }
+      const m2 = line.match(/^-\s*面[:：]\s*(.+)$/);
+      if (m2 && cur) cur.facets.push(m2[1].trim());
+    }
+    for (const e of entities) {
+      const head = box.createDiv();
+      head.style.cursor = 'pointer';
+      head.style.fontWeight = '600';
+      head.setText(`▸ ${e.name}（${e.facets.length} 个面）`);
+      const body = box.createDiv();
+      body.style.display = 'none';
+      body.style.paddingLeft = '16px';
+      for (const f of e.facets) body.createDiv({ text: '· ' + f });
+      head.addEventListener('click', () => {
+        const opened = body.style.display !== 'none';
+        body.style.display = opened ? 'none' : 'block';
+        head.setText(`${opened ? '▸' : '▾'} ${e.name}（${e.facets.length} 个面）`);
+      });
+      const fi = body.createEl('input', { cls: 'sfb-input', attr: { placeholder: '新面名称' } });
+      fi.style.width = '100%';
+      const fb = body.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加面' });
+      fb.addEventListener('click', async () => {
+        const name = fi.value.trim();
+        if (!name) return;
+        let t = '';
+        try {
+          t = await this.app.vault.adapter.read('分类类型-灵感体系.md');
+        } catch (err) {
+          /* ignore */
+        }
+        const lines = String(t).split('\n');
+        const idx = lines.findIndex((l) => l.trim() === `## 体：${e.name}`);
+        if (idx < 0) return;
+        let end = lines.length;
+        for (let i = idx + 1; i < lines.length; i++) {
+          if (/^##\s*体[:：]/.test(lines[i])) {
+            end = i;
+            break;
+          }
+        }
+        lines.splice(end, 0, `- 面：${name}`);
+        await this.app.vault.adapter.write('分类类型-灵感体系.md', lines.join('\n'));
+        await this.loadConceptText();
+        this.display();
+      });
+    }
+    if (!entities.length) {
+      box.createEl('p', { cls: 'setting-item-description', text: '还没有体。' });
+    }
+    const input = box.createEl('input', { cls: 'sfb-input', attr: { placeholder: '新体名称' } });
+    input.style.width = '100%';
+    const btn = box.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加体' });
+    btn.addEventListener('click', async () => {
+      const name = input.value.trim();
+      if (!name) return;
+      let t = '';
+      try {
+        t = await this.app.vault.adapter.read('分类类型-灵感体系.md');
+      } catch (err) {
+        /* ignore */
+      }
+      if (!t.trim()) t = '# 分类类型-灵感体系\n';
+      await this.app.vault.adapter.write('分类类型-灵感体系.md', t.trimEnd() + `\n\n## 体：${name}\n`);
+      await this.loadConceptText();
+      this.display();
+    });
+  }
+
+  async importSkillCanvas() {
+    const rel = (this.settings.targetCanvas || '').trim();
+    if (!rel) {
+      new Notice('请先在设置里填写“默认写入白板”');
+      return;
+    }
+    if (!nodeFs || !nodePath) {
+      new Notice('当前环境不支持读取外部文件（仅桌面版可用）');
+      return;
+    }
+    const source = (this.settings.importSource || '').trim();
+    if (!source) {
+      new Notice('请先在设置里填写「分类结果文件」路径，自动导入已跳过', 8000);
+      return;
+    }
+    if (!nodeFs.existsSync(source)) {
+      new Notice('找不到 Skill 输出文件：' + source, 8000);
+      return;
+    }
+    let raw = '';
+    try {
+      raw = nodeFs.readFileSync(source, 'utf8');
+    } catch (e) {
+      new Notice('读取失败：' + e.message, 8000);
+      return;
+    }
+    let data = null;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      new Notice('文件不是合法 JSON，已停止', 8000);
+      return;
+    }
+    if (!data || !Array.isArray(data.nodes)) {
+      new Notice('文件缺少 nodes 数组，已停止', 8000);
+      return;
+    }
+    const norm = normalizePath(rel);
+    const basePath = this.app.vault.adapter.basePath || '';
+    const absTarget = basePath ? nodePath.join(basePath, norm) : '';
+    if (absTarget && nodePath.resolve(absTarget) === nodePath.resolve(source)) {
+      new Notice('源文件和白板是同一个文件，已停止', 8000);
+      return;
+    }
+    let backup = '';
+    try {
+      if (absTarget && nodeFs.existsSync(absTarget)) {
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        backup = nodePath.join(nodePath.dirname(source), `backup-${stamp}.canvas`);
+        nodeFs.copyFileSync(absTarget, backup);
+      }
+    } catch (e) {
+      new Notice('备份失败，已停止：' + e.message, 8000);
+      return;
+    }
+    try {
+      await this.app.vault.adapter.write(norm, raw);
+
+    try {
+      const leaves = this.app.workspace.getLeavesOfType('canvas');
+      for (const leaf of leaves) {
+        const v = leaf.view;
+        if (v && v.file && v.file.path === norm) {
+          await leaf.openFile(v.file, { active: false });
+        }
+      }
+    } catch (e) {
+      /* 刷新失败不影响写入结果 */
+    }
+    } catch (e) {
+      new Notice('写入白板失败：' + e.message, 8000);
+      return;
+    }
+    new Notice(
+      `已导入 ${data.nodes.length} 个节点${backup ? '；备份：' + backup : ''}。请关闭并重新打开白板查看。`,
+      10000
+    );
   }
 
   openModal() {
@@ -1907,8 +2195,8 @@ module.exports = class VideoCardCollector extends Plugin {
       await sleep(70);
     }
 
-    const rules = getActiveRules(this.settings);
-    const autoClassify = this.settings.classifyMode === 'keyword' && rules.length > 0;
+    const rules = [];
+    const autoClassify = false;
 
     try {
       const existing = await readCanvas(this.app, canvasPath);
@@ -1991,3 +2279,4 @@ module.exports = class VideoCardCollector extends Plugin {
     return { path, size };
   }
 };
+/* 独立分类标签页已删除：分类类型只在主设置页最下方 */

@@ -6,6 +6,8 @@
 
 卡片散开铺在空白处，**由你自己拖动分类、上色、连线**。工具不替你做归类，只负责把素材搬到画板上。
 
+不想自己归类也可以——插件能按关键词自动分组，还有一个交给 AI Agent 的 Skill 会按语义把卡片排成层级（两者都是可选的，见下文「分类」与「Skill」两节）。
+
 <p align="center">
   <img src="docs/architecture.svg" alt="工作原理" width="100%">
 </p>
@@ -200,6 +202,42 @@
 
 > 白板原生只有 6 种颜色，分类超过 6 个时颜色会重复，靠框上的名字区分。
 
+## Skill：交给 Agent 的自动分类（可选）
+
+前面两种分类都是插件在干活——按关键词打标签、往框里塞卡片，规则你自己定。**Skill 是第三条路：把归类这件事交给 AI Agent 自己判断。**
+
+它叫 **social-favboard-Librarian**（收藏夹画板整理员），是本仓库根目录下的 `social-favboard-Librarian/` 文件夹。
+
+**它是干嘛的**
+
+它读你草稿白板里的卡片（标题、作者、标签、封面），按你自己定义的「**体 / 面 / 线 / 点**」四级概念做语义归类——不是关键词匹配，是理解内容之后放位置。比如「体：学习」下面分「面：编程」「面：语言」，再下面是具体视频。分完之后，它在白板里排成横向树杈，一眼能看出层级。
+
+它只动**草稿白板**，你已经整理好的最终白板它一律不碰。
+
+**和插件什么关系**
+
+它自己不是插件，也不会跑到你的 Obsidian 里——它是**给 Agent 用的一套说明书加脚本**，跑在 Agent 那一侧（目前适配 CodeArts Agent）。中间靠一个 canvas 文件交接：
+
+```
+Agent 读草稿白板 → 按体/面归类 → 生成 organized.canvas
+        ↓
+插件盯着这个文件，一变就整块替换掉草稿白板（改前自动备份）
+```
+
+所以它的定位是：**插件管「收」，Skill 管「想」**。没有 Skill，插件的手动和关键词分类照样用；有了 Skill，分类这一步可以不用你动手。
+
+**怎么装**
+
+1. 把 `social-favboard-Librarian/` 整个文件夹放进 Agent 的 skills 目录（工作区级或用户级都行）
+2. 开新会话，确认 Agent 认得 `social-favboard-Librarian`
+3. 在插件设置里填两处：
+   - **Skill 输出文件**：Skill 生成 `organized.canvas` 的绝对路径（留空则不自动导入）
+   - **Skill整理排版白板-自动覆盖白板**：打开，插件才会在文件变化后 2 秒内导回白板
+4. 在 vault 里建一份 `分类类型-灵感体系.md`（也可以直接在插件设置的「分类类型」面板里加体/面）
+5. 对 Agent 说一句：**「整理草稿白板」**
+
+详细步骤、体/面怎么写、出问题怎么回滚，看 `social-favboard-Librarian/使用说明.md` 和 `安装与使用教程.md`。
+
 ## 暂停抓取
 
 点扩展图标，最上面那个绿色大按钮就是总开关。
@@ -317,10 +355,20 @@ Obsidian 插件那边基本不用动——它不关心内容来自哪个平台�
 │   ├── background.js      # 暂存、转发到本机端口
 │   ├── popup.html
 │   └── popup.js
+├── social-favboard-Librarian/  # Skill：交给 Agent 的自动分类（可选，见上文）
+│   ├── SKILL.md
+│   ├── references/
+│   ├── scripts/
+│   ├── 使用说明.md
+│   └── 安装与使用教程.md
 ├── test/
-│   └── e2e.test.js        # 100 项自动化测试
+│   └── e2e.test.js        # 203 项自动化测试
 ├── docs/
-│   └── architecture.svg
+│   ├── architecture.svg        # 架构图
+│   ├── preview*.png / .jpg     # 白板实拍
+│   ├── social-preview*.png     # 分享卡片（横版 / 方版）
+│   ├── INSTALL_EN.md
+│   └── USAGE_EN.md
 ├── LICENSE
 └── package.json
 ```
@@ -330,7 +378,7 @@ Obsidian 插件那边基本不用动——它不关心内容来自哪个平台�
 无构建步骤，无第三方依赖，改完保存即生效。
 
 ```bash
-npm test        # 跑 100 项测试（用 Node 内置 vm 模拟浏览器与 Obsidian 环境）
+npm test        # 跑 203 项测试（用 Node 内置 vm 模拟浏览器与 Obsidian 环境）
 ```
 
 测试覆盖：端口通信、令牌校验、CORS 预检、三平台响应解析、Canvas 节点格式与布局、路径清洗、垃圾数据过滤、分批上限、暂停开关。

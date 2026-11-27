@@ -6,6 +6,8 @@ Turn your **likes and favorites** on social media — Douyin (likes / collection
 
 Cards are spread across empty space, and **you do the sorting yourself**: drag them into groups, color them, connect them. The tool doesn't organize for you — it just moves the material onto the canvas.
 
+You don't have to sort by hand, though: the plugin can group by keyword, and an optional Skill hands semantic classification to an AI agent (both covered in the "Classification" and "Skill" sections below).
+
 <p align="center">
   <img src="docs/architecture.svg" alt="How it works" width="100%">
 </p>
@@ -200,6 +202,43 @@ Boundaries of the organize action:
 
 > Obsidian Canvas natively offers only 6 colors; with more than 6 topics colors repeat and the frame name is what tells them apart.
 
+## Skill: agent-driven classification (optional)
+
+The two methods above are the plugin doing the work — keyword matching, cards dropped into frames, rules you write yourself. **The Skill is a third route: hand the sorting over to an AI agent.**
+
+It's called **social-favboard-Librarian**, and it lives in `social-favboard-Librarian/` at the repo root.
+
+**What it does**
+
+It reads the cards on your draft board (title, author, tags, cover) and groups them by meaning, following a four-level vocabulary you define — **Body / Facet / Line / Point**. Not keyword matching: it understands the content, then decides where it belongs. "Body: Learning" might hold "Facet: Programming" and "Facet: Languages", with the actual videos underneath. The result is laid out as a horizontal tree, so the hierarchy is visible at a glance.
+
+It only touches the **draft board**. A board you've already tidied up is never modified.
+
+**How it relates to the plugin**
+
+It isn't a plugin, and it never runs inside your Obsidian — it's **a set of instructions and scripts for an agent**, running on the agent's side (currently built for CodeArts Agent). The handoff is a single canvas file:
+
+```
+agent reads the draft board → groups by Body/Facet → writes organized.canvas
+        ↓
+plugin watches that file; when it changes, replaces the draft board in one block
+(backs up first)
+```
+
+In short: **the plugin collects, the Skill thinks.** Without the Skill, manual and keyword classification still work exactly as described. With it, the sorting step needs no hands.
+
+**Installing it**
+
+1. Drop the whole `social-favboard-Librarian/` folder into your agent's skills directory (workspace-level or user-level, either is fine)
+2. Start a new session and confirm the agent recognises `social-favboard-Librarian`
+3. Fill in two fields in the plugin settings:
+   - **Skill output file** — absolute path to the `organized.canvas` the Skill writes (leave empty to disable auto-import)
+   - **Auto-replace board with Skill layout** — turn it on, so the plugin imports within ~2 seconds of the file changing
+4. Create `分类类型-灵感体系.md` in your vault (or just add bodies/facets from the "Classification types" panel in plugin settings)
+5. Tell the agent: **"整理草稿白板"** (organize the draft board)
+
+For step-by-step instructions, how to write bodies and facets, and how to roll back, see `social-favboard-Librarian/使用说明.md` and `安装与使用教程.md`.
+
 ## Pausing collection
 
 Click the extension icon — the big green button at the top is the master switch.
@@ -317,10 +356,18 @@ Whether to use it, and at what scale, is your call.
 │   ├── background.js      # Buffering, forwarding to the local port
 │   ├── popup.html
 │   └── popup.js
+├── social-favboard-Librarian/   # Skill: agent-driven classification (optional, see above)
+│   ├── SKILL.md
+│   ├── references/
+│   ├── scripts/
+│   ├── 使用说明.md
+│   └── 安装与使用教程.md
 ├── test/
 │   └── e2e.test.js        # Automated test suite (203 checks)
 ├── docs/
 │   ├── architecture.svg
+│   ├── preview*.png / .jpg     # Real board screenshots
+│   ├── social-preview*.png     # Share cards (landscape / square)
 │   ├── INSTALL_EN.md      # Step-by-step installation guide (English)
 │   └── USAGE_EN.md        # Usage guide (English)
 ├── LICENSE

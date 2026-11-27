@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Social Favboard",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "在你自己的浏览器里读取抖音 / B站 / 小红书的喜欢与收藏，发送给 Obsidian 插件整理成白板。不额外请求任何平台接口。",
   "permissions": ["storage"],
   "host_permissions": [
