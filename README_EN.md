@@ -317,15 +317,19 @@ The Obsidian plugin barely needs changes — it doesn't care where content came 
 
 ---
 
-## On compliance and risk
+## Scope and caveats
 
-Stated plainly, no sugarcoating:
+**This is an unofficial tool, not affiliated with Douyin, Bilibili or Xiaohongshu.**
 
-**Tools like this violate platform terms of service.** Whether reading DOM or reading responses, it falls under "unauthorized automated content access".
+How it works, point by point:
 
-**But it does not touch legal red lines.** It grabs your own favorites, for personal use, non-commercial, without breaking any encryption.
+- **It only touches your own data**: it reads the likes and favorites on your own account, nothing from other people, and republishes nothing
+- **Every request is issued by your browser**: the extension sends no platform-facing requests of its own — no forging, no replaying, no reverse-engineered signatures
+- **It never touches your account**: no reading, storing or transmitting of your login state; no simulated clicks, no automatic paging, no bypassing verification
+- **Everything stays local**: data moves only between your browser and Obsidian on your own machine, never through a third-party server
+- **Personal use, non-commercial**
 
-**The architecture deliberately minimizes risk:**
+The architecture deliberately avoids these practices:
 
 | High-risk practice | This project |
 |---|---|
@@ -335,9 +339,9 @@ Stated plainly, no sugarcoating:
 | Auto-solving CAPTCHAs | None |
 | High-frequency API hammering | None — covers download serially, 70ms apart |
 
-All requests are issued by your real browser; the extension sends no platform-facing requests of its own. **But "zero risk" only exists with pure manual copying — that much we won't pretend otherwise.**
+All requests are issued by your real browser; the extension sends no platform-facing requests of its own.
 
-Whether to use it, and at what scale, is your call.
+Platform terms can change at any time — whether to use this, and at what scale, is your own call. The project is provided "as is" under the MIT license, without warranty of any kind.
 
 ---
 
