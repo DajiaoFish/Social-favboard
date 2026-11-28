@@ -2,11 +2,35 @@
 
 [简体中文](README.md) | **English**
 
-Turn your **likes and favorites** on social media — Douyin (likes / collections), Bilibili favorites folders, Xiaohongshu (collected / liked) — into cards on an Obsidian Canvas board, each with cover image, title, author and the original link.
+**It reads the favorites list straight off the platform's own web page** — Douyin (likes / collections), Bilibili favorites folders, Xiaohongshu (collected / liked) — and imports cover, title, author, duration and original link in bulk onto an Obsidian Canvas board. No copying links one at a time: open your favorites page and keep scrolling.
 
-Cards are spread across empty space, and **you do the sorting yourself**: drag them into groups, color them, connect them. The tool doesn't organize for you — it just moves the material onto the canvas.
+What lands on the board is **cover cards**, not a row of links. Drag them around, sort them, group them the way you'd arrange photos on a desk — or draw a line between two videos that look unrelated. Position and connections become your own idea map: mind maps, moodboards, whatever the wall turns into.
 
-You don't have to sort by hand, though: the plugin can group by keyword, and an optional Skill hands semantic classification to an AI agent (both covered in the "Classification" and "Skill" sections below).
+It doesn't transcribe videos. **The wall of covers is the content** — the picture brings back why you saved it, faster than reading a list of titles. Which is why I'd rather not call it a knowledge base. It's an inspiration wall, a board of raw material.
+
+If you'd rather not sort anything yourself: the plugin groups cards by keyword, and an optional Skill hands semantic layout to an AI agent (both optional — see "Classification" and "Skill" below).
+
+**How it compares to a video-to-text knowledge base**
+
+|  | A typical video-to-text knowledge base | Social Favboard board |
+| --- | --- | --- |
+| What gets stored | The transcript | A card: cover + text info |
+| Finding something | Read titles, search keywords | One look at the picture |
+| Sorting | Folders and tags | Drag it where it belongs / AI keyword grouping |
+| Browsing | Top to bottom, one by one | A flat plane — any two cards can be connected |
+| Opening it again next month | Usually not | A whole wall in view; one glance and something comes back |
+
+**What you actually get**
+
+| | |
+| --- | --- |
+| **Platforms** | Douyin (likes / collections), Bilibili favorites folders, Xiaohongshu (collected / liked) |
+| **On each card** | Cover, title, author, duration, date saved, original link — click to jump back |
+| **Click a card** | Plays the original video. Nothing is downloaded, no local storage used |
+| **How it sorts** | Drag by hand, drop into keyword frames, or let an AI agent arrange by meaning |
+| **Where the data goes** | Only between your browser and Obsidian. The extension sends no requests to the platforms |
+
+Install the plugin → install the browser extension → open your favorites page and scroll. Full steps in [Installation](#installation).
 
 <p align="center">
   <img src="docs/architecture.svg" alt="How it works" width="100%">
@@ -45,15 +69,6 @@ You don't have to sort by hand, though: the plugin can group by keyword, and an 
 You collect a pile of short videos while scrolling, then want to turn them into an inspiration library — but copying links one by one, taking screenshots and pasting them into Obsidian is tedious.
 
 This tool does exactly one thing: **you scroll normally in your browser, and the cards grow onto the board by themselves.**
-
-## What it does NOT do
-
-- ❌ No cloud, no upload, no account needed
-- ❌ No private platform APIs, no fake login states, no signature cracking
-- ❌ No auto-pagination, no bulk pulling of content you haven't viewed
-- ❌ No auto-classification — sorting is your judgment call, not the tool's
-
----
 
 ## How it works
 
