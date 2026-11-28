@@ -10,6 +10,23 @@ const {
   normalizePath,
 } = require('obsidian');
 
+/* 界面语言：跟随 Obsidian 的语言设置（中文界面 → 中文，其余 → 英文） */
+function detectZhLocale() {
+  try {
+    const raw =
+      (typeof window !== 'undefined' &&
+        window.localStorage &&
+        window.localStorage.getItem('language')) ||
+      (typeof navigator !== 'undefined' && navigator.language) ||
+      'en';
+    return String(raw).toLowerCase().startsWith('zh');
+  } catch (e) {
+    return false;
+  }
+}
+let UI_ZH = detectZhLocale();
+const T = (zh, en) => (UI_ZH ? zh : en);
+
 /* =========================================================
  * Node 内置 http（桌面版可用）
  * ========================================================= */
@@ -1196,10 +1213,11 @@ class VccSettingTab extends PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
+    UI_ZH = detectZhLocale();
     containerEl.createEl('h2', { text: 'Social Favboard' });
 
     /* ---- 连接状态 ---- */
-    containerEl.createEl('h3', { text: '连接状态' });
+    containerEl.createEl('h3', { text: T('连接状态', 'Connection') });
     this.statusEl = containerEl.createDiv({ cls: 'sfb-setting-status' });
     this.renderStatus();
 
@@ -1207,10 +1225,10 @@ class VccSettingTab extends PluginSettingTab {
     this.statusTimer = setInterval(() => this.renderStatus(), 2000);
 
     new Setting(containerEl)
-      .setName('重新启动接收端口')
-      .setDesc('如果浏览器扩展提示找不到插件，点一下这里')
+      .setName(T('重新启动接收端口', 'Restart the receiving port'))
+      .setDesc(T('如果浏览器扩展提示找不到插件，点一下这里', 'Click here if the browser extension cannot find the plugin'))
       .addButton((b) =>
-        b.setButtonText('重启').onClick(async () => {
+        b.setButtonText(T('重启', 'Restart')).onClick(async () => {
           this.plugin.bridge.stop();
           await this.plugin.bridge.start();
           this.renderStatus();
@@ -1221,20 +1239,20 @@ class VccSettingTab extends PluginSettingTab {
     containerEl.createEl('p', {
       cls: 'setting-item-description',
       text:
-        '浏览器扩展会自动扫描 127.0.0.1 的 27123–27128 端口来配对，通常不需要你手动配置。' +
-        '这个端口只绑定在本机回环地址上，局域网里的其它设备访问不到。',
+        T('浏览器扩展会自动扫描 127.0.0.1 的 27123–27128 端口来配对，通常不需要你手动配置。', 'The extension scans ports 27123-27128 on 127.0.0.1 to pair automatically, so no manual setup is needed.') +
+        T('这个端口只绑定在本机回环地址上，局域网里的其它设备访问不到。', 'The port binds to the loopback address only, so other devices on your network cannot reach it.'),
     });
 
     /* ---- 待写入 ---- */
-    containerEl.createEl('h3', { text: '待写入队列' });
+    containerEl.createEl('h3', { text: T('待写入队列', 'Pending queue') });
     const queueInfo = containerEl.createEl('p', { cls: 'setting-item-description' });
     const renderQueue = () => {
-      queueInfo.setText(`当前队列里有 ${this.plugin.queue.size} 条内容等待写入白板。`);
+      queueInfo.setText(T(`当前队列里有 ${this.plugin.queue.size} 条内容等待写入白板。`, `${this.plugin.queue.size} items waiting to be written.`));
     };
     renderQueue();
 
-    new Setting(containerEl).setName('立即写入').addButton((b) =>
-      b.setButtonText('写入').onClick(async () => {
+    new Setting(containerEl).setName(T('立即写入', 'Write now')).addButton((b) =>
+      b.setButtonText(T('写入', 'Write')).onClick(async () => {
         const n = await this.plugin.flushQueue({ force: true });
         renderQueue();
         new Notice(n ? `已写入 ${n} 张卡片` : '没有新内容');
@@ -1242,8 +1260,8 @@ class VccSettingTab extends PluginSettingTab {
     );
 
     new Setting(containerEl)
-      .setName('新采集的视频自动写入白板')
-      .setDesc('开启后，浏览器扩展收到新采集的视频会自动追加到「默认写入白板」；关闭则只进队列，需要点上面的「立即写入」')
+      .setName(T('新采集的视频自动写入白板', 'Write new items to the board automatically'))
+      .setDesc(T('开启后，浏览器扩展收到新采集的视频会自动追加到「默认写入白板」；关闭则只进队列，需要点上面的「立即写入」', 'When on, newly collected items are appended to the default board. When off they only enter the queue, and you click Write now.'))
       .addToggle((t) =>
         t.setValue(this.plugin.settings.autoWrite).onChange(async (v) => {
           this.plugin.settings.autoWrite = v;
@@ -1251,8 +1269,8 @@ class VccSettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(containerEl).setName('清空队列').addButton((b) =>
-      b.setButtonText('清空').onClick(() => {
+    new Setting(containerEl).setName(T('清空队列', 'Clear queue')).addButton((b) =>
+      b.setButtonText(T('清空', 'Clear')).onClick(() => {
         this.plugin.queue.clear();
         renderQueue();
         new Notice('已清空队列');
@@ -1266,14 +1284,19 @@ class VccSettingTab extends PluginSettingTab {
     /* 分类 / 关键词规则 / 立即整理 已移除 */
 
     /* ---- 卡片外观 ---- */
-    containerEl.createEl('h3', { text: '卡片' });
+    containerEl.createEl('h3', { text: T('卡片', 'Cards') });
 
     new Setting(containerEl)
-      .setName('默认写入白板')
-      .setDesc('填相对 vault 的路径，例如：卡片/我的收藏.canvas（不要带 C:\\... 这种绝对路径）')
+      .setName(T('默认写入白板', 'Default board'))
+      .setDesc(
+        T(
+          '填相对 vault 的路径，例如：卡片/我的收藏.canvas（不要带 C:\\... 这种绝对路径）',
+          'Path relative to your vault, e.g. cards/favorites.canvas (no absolute paths like C:\\...)'
+        )
+      )
       .addText((t) =>
         t
-          .setPlaceholder('文件夹/白板.canvas')
+          .setPlaceholder(T('文件夹/白板.canvas', 'folder/board.canvas'))
           .setValue(this.plugin.settings.targetCanvas)
           .onChange(async (v) => {
             const basePath =
@@ -1286,9 +1309,9 @@ class VccSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Skill 输出文件')
+      .setName(T('Skill 输出文件', 'Skill output file'))
       .setDesc(
-        '绝对路径。Skill 排好版生成的白板文件；在命令面板运行“从 Skill 输出文件导入白板”时，会把它写进上面的默认白板。留空则不自动导入。'
+        T('绝对路径。Skill 排好版生成的白板文件；在命令面板运行“从 Skill 输出文件导入白板”时，会把它写进上面的默认白板。留空则不自动导入。', 'Absolute path to the canvas the Skill produces. The command Import board from Skill output writes it into the default board above. Leave empty to disable auto-import.')
       )
       .addText((t) =>
         t
@@ -1303,9 +1326,9 @@ class VccSettingTab extends PluginSettingTab {
     /* Skill 排版方式已移除：统一使用「生成文件后导入」 */
 
     new Setting(containerEl)
-      .setName('Skill整理排版白板-自动覆盖白板（会覆盖用户自己的排版）')
+      .setName(T('Skill整理排版白板-自动覆盖白板（会覆盖用户自己的排版）', 'Auto-apply Skill layout (overwrites your own arrangement)'))
       .setDesc(
-        '开启后，Skill 每次重新生成排版文件，插件会在约 2 秒内用它整块替换「默认写入白板」；替换前自动备份。'
+        T('开启后，Skill 每次重新生成排版文件，插件会在约 2 秒内用它整块替换「默认写入白板」；替换前自动备份。', 'When on, the plugin replaces the default board with the Skill output within about 2 seconds of it changing. A backup is made first.')
       )
       .addToggle((t) =>
         t.setValue(!!this.plugin.settings.autoImport).onChange(async (v) => {
@@ -1317,7 +1340,7 @@ class VccSettingTab extends PluginSettingTab {
     /* 「新采集的视频自动写入白板」已移到「待写入队列」区块 */
 
     new Setting(containerEl)
-      .setName('封面目录')
+      .setName(T('封面目录', 'Cover folder'))
       .addText((t) =>
         t.setValue(this.plugin.settings.coverFolder).onChange(async (v) => {
           this.plugin.settings.coverFolder = v.trim() || 'video-covers';
@@ -1326,8 +1349,8 @@ class VccSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('单次同步上限')
-      .setDesc('每次最多写入多少张卡片（含封面下载）。剩下的留在队列里，下次继续。调小可降低请求量。')
+      .setName(T('单次同步上限', 'Items per sync'))
+      .setDesc(T('每次最多写入多少张卡片（含封面下载）。剩下的留在队列里，下次继续。调小可降低请求量。', 'Maximum cards written per sync (covers included). The rest stay queued for next time. Lower values mean fewer requests.'))
       .addSlider((s) =>
         s
           .setLimits(5, 50, 5)
@@ -1339,7 +1362,7 @@ class VccSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(containerEl).setName('卡片宽度').addSlider((s) =>
+    new Setting(containerEl).setName(T('卡片宽度', 'Card width')).addSlider((s) =>
       s
         .setLimits(200, 560, 20)
         .setValue(this.plugin.settings.cardWidth)
@@ -1350,7 +1373,7 @@ class VccSettingTab extends PluginSettingTab {
         })
     );
 
-    new Setting(containerEl).setName('每行卡片数').addSlider((s) =>
+    new Setting(containerEl).setName(T('每行卡片数', 'Cards per row')).addSlider((s) =>
       s
         .setLimits(1, 10, 1)
         .setValue(this.plugin.settings.maxPerRow)
@@ -1361,7 +1384,7 @@ class VccSettingTab extends PluginSettingTab {
         })
     );
 
-    new Setting(containerEl).setName('横向间距').addSlider((s) =>
+    new Setting(containerEl).setName(T('横向间距', 'Horizontal gap')).addSlider((s) =>
       s
         .setLimits(20, 300, 10)
         .setValue(this.plugin.settings.gapX)
@@ -1372,7 +1395,7 @@ class VccSettingTab extends PluginSettingTab {
         })
     );
 
-    new Setting(containerEl).setName('纵向间距').addSlider((s) =>
+    new Setting(containerEl).setName(T('纵向间距', 'Vertical gap')).addSlider((s) =>
       s
         .setLimits(20, 300, 10)
         .setValue(this.plugin.settings.gapY)
@@ -1384,19 +1407,19 @@ class VccSettingTab extends PluginSettingTab {
     );
 
     /* ---- 去重记录 ---- */
-    containerEl.createEl('h3', { text: '去重记录' });
+    containerEl.createEl('h3', { text: T('去重记录', 'Duplicate records') });
     const total =
       (this.plugin.settings.synced.douyin || []).length +
       (this.plugin.settings.synced.bilibili || []).length +
       (this.plugin.settings.synced.xhs || []).length;
     containerEl.createEl('p', {
       cls: 'setting-item-description',
-      text: `已记录 ${total} 条收过的内容。`,
+      text: T(`已记录 ${total} 条收过的内容。`, `${total} items recorded.`),
     });
 
     new Setting(containerEl)
-      .setName('跳过收过的内容')
-      .setDesc('开着：同一个视频只收一次。关掉：每次刷到都会重新生成卡片（会重复）。')
+      .setName(T('跳过收过的内容', 'Skip already-collected items'))
+      .setDesc(T('开着：同一个视频只收一次。关掉：每次刷到都会重新生成卡片（会重复）。', 'On: each video is collected once. Off: every scroll regenerates the card, creating duplicates.'))
       .addToggle((t) =>
         t.setValue(this.plugin.settings.dedupe !== false).onChange(async (v) => {
           this.plugin.settings.dedupe = v;
@@ -1406,19 +1429,22 @@ class VccSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('从白板重建记录')
+      .setName(T('从白板重建记录', 'Rebuild records from boards'))
       .setDesc(
-        '扫描全库所有白板，只把白板上还存在的卡片记成「已收过」，其余清掉。' +
-          '你在白板里删掉的卡片，下次刷到就能重新收回来，又不会把旧的全都重抓一遍。'
+        T(
+          '扫描全库所有白板，只把白板上还存在的卡片记成「已收过」，其余清掉。' +
+            '你在白板里删掉的卡片，下次刷到就能重新收回来，又不会把旧的全都重抓一遍。',
+          'Scans every board and keeps records only for cards still present. Cards you deleted from a board can be collected again next time, without re-fetching everything.'
+        )
       )
       .addButton((b) =>
         b
-          .setButtonText('重建')
+          .setButtonText(T('重建', 'Rebuild'))
           .setCta()
           .onClick(async () => {
-            b.setButtonText('扫描中…').setDisabled(true);
+            b.setButtonText(T('扫描中…', 'Scanning…')).setDisabled(true);
             const r = await this.plugin.rebuildSynced();
-            b.setButtonText('重建').setDisabled(false);
+            b.setButtonText(T('重建', 'Rebuild')).setDisabled(false);
             new Notice(
               `扫描了 ${r.canvases} 块白板：记录 ${r.before} 条 → ${r.after} 条。` +
                 (r.after < r.before ? '清掉了白板上已不存在的记录。' : ''),
@@ -1429,10 +1455,10 @@ class VccSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('清空记录')
-      .setDesc('全部清零。之后所有内容都会被当成新的，重新收一遍到白板。')
+      .setName(T('清空记录', 'Clear records'))
+      .setDesc(T('全部清零。之后所有内容都会被当成新的，重新收一遍到白板。', 'Wipes everything. All content is then treated as new and collected again.'))
       .addButton((b) =>
-        b.setButtonText('清空').onClick(async () => {
+        b.setButtonText(T('清空', 'Clear')).onClick(async () => {
           this.plugin.settings.synced = { douyin: [], bilibili: [], xhs: [] };
           await this.plugin.saveSettings();
           new Notice('已清空');
@@ -1441,18 +1467,18 @@ class VccSettingTab extends PluginSettingTab {
       );
 
     /* ---- 说明 ---- */
-    containerEl.createEl('h3', { text: '它是怎么工作的' });
+    containerEl.createEl('h3', { text: T('它是怎么工作的', 'How it works') });
     containerEl.createEl('p', {
       cls: 'setting-item-description',
       text:
-        '浏览器扩展运行在你自己的 Chrome / Edge 里，读的是页面已经加载出来的内容——它不发任何面向平台的请求。' +
-        '读到的东西通过本机回环地址交给我这个插件，插件下载封面、生成卡片、写进白板。' +
-        '与平台有关的一切都发生在你的浏览器里、以你本人的身份完成。',
+        T('浏览器扩展运行在你自己的 Chrome / Edge 里，读的是页面已经加载出来的内容——它不发任何面向平台的请求。', 'The extension runs inside your own Chrome or Edge and reads content the page has already loaded. It sends no requests of its own to any platform.') +
+        T('读到的东西通过本机回环地址交给我这个插件，插件下载封面、生成卡片、写进白板。', 'What it reads is handed to this plugin over the loopback address; the plugin downloads covers, builds cards and writes them to the board.') +
+        T('与平台有关的一切都发生在你的浏览器里、以你本人的身份完成。', 'Everything platform-related happens inside your browser, under your own identity.'),
     });
     containerEl.createEl('p', {
       cls: 'setting-item-description',
       text:
-        '需要说明：这仍属于非官方途径，无法保证平台条款意义上的完全合规，也无法保证平台改版后始终可用。是否使用请自行判断。',
+        T('需要说明：这仍属于非官方途径，无法保证平台条款意义上的完全合规，也无法保证平台改版后始终可用。是否使用请自行判断。', 'Note: this remains an unofficial route. Platform terms vary, and a redesign may break collection. Use at your own discretion.'),
     });
 
     this.renderConcepts(containerEl);
@@ -1467,10 +1493,10 @@ class VccSettingTab extends PluginSettingTab {
       });
       return;
     }
-    containerEl.createEl('h3', { text: '分类类型' });
+    containerEl.createEl('h3', { text: T('分类类型', 'Classification types') });
     containerEl.createEl('p', {
       cls: 'setting-item-description',
-      text: '体 / 面来自「分类类型-灵感体系.md」。点体名展开或收起它下面的面。',
+      text: T('体 / 面来自「分类类型-灵感体系.md」。点体名展开或收起它下面的面。', 'Bodies and facets come from 分类类型-灵感体系.md. Click a body name to expand or collapse its facets.'),
     });
     const box = containerEl.createDiv();
     const entities = [];
@@ -1489,7 +1515,7 @@ class VccSettingTab extends PluginSettingTab {
       const head = box.createDiv();
       head.style.cursor = 'pointer';
       head.style.fontWeight = '600';
-      head.setText(`▸ ${e.name}（${e.facets.length} 个面）`);
+      head.setText(T(`▸ ${e.name}（${e.facets.length} 个面）`, `▸ ${e.name} (${e.facets.length} facets)`));
       const body = box.createDiv();
       body.style.display = 'none';
       body.style.paddingLeft = '16px';
@@ -1497,11 +1523,16 @@ class VccSettingTab extends PluginSettingTab {
       head.addEventListener('click', () => {
         const opened = body.style.display !== 'none';
         body.style.display = opened ? 'none' : 'block';
-        head.setText(`${opened ? '▸' : '▾'} ${e.name}（${e.facets.length} 个面）`);
+        head.setText(
+          T(
+            `${opened ? '▸' : '▾'} ${e.name}（${e.facets.length} 个面）`,
+            `${opened ? '▸' : '▾'} ${e.name} (${e.facets.length} facets)`
+          )
+        );
       });
-      const fb = body.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加面' });
+      const fb = body.createEl('button', { cls: 'sfb-add-topic', text: T('+ 添加面', '+ Add facet') });
       fb.addEventListener('click', () => {
-        const inp = body.createEl('input', { cls: 'sfb-input', attr: { placeholder: '输入面名称，回车保存' } });
+        const inp = body.createEl('input', { cls: 'sfb-input', attr: { placeholder: T('输入面名称，回车保存', 'Facet name, press Enter to save') } });
         inp.style.width = '100%';
         inp.focus();
         let saved = false;
@@ -1544,11 +1575,11 @@ class VccSettingTab extends PluginSettingTab {
       });
     }
     if (!entities.length) {
-      box.createEl('p', { cls: 'setting-item-description', text: '还没有体。' });
+      box.createEl('p', { cls: 'setting-item-description', text: T('还没有体。', 'No bodies yet.') });
     }
-    const btn = box.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加体' });
+    const btn = box.createEl('button', { cls: 'sfb-add-topic', text: T('+ 添加体', '+ Add body') });
     btn.addEventListener('click', () => {
-      const inp = box.createEl('input', { cls: 'sfb-input', attr: { placeholder: '输入体名称，回车保存' } });
+      const inp = box.createEl('input', { cls: 'sfb-input', attr: { placeholder: T('输入体名称，回车保存', 'Body name, press Enter to save') } });
       inp.style.width = '100%';
       inp.focus();
       let saved = false;
@@ -1588,10 +1619,10 @@ class VccSettingTab extends PluginSettingTab {
     this.statusEl.classList.remove('ok', 'bad');
     if (b.running) {
       this.statusEl.addClass('ok');
-      this.statusEl.setText(`已就绪 · 正在监听 127.0.0.1:${b.port}`);
+      this.statusEl.setText(T(`已就绪 · 正在监听 127.0.0.1:${b.port}`, `Ready · listening on 127.0.0.1:${b.port}`));
     } else {
       this.statusEl.addClass('bad');
-      this.statusEl.setText(b.lastError || '未启动');
+      this.statusEl.setText(b.lastError || T('未启动', 'Not running'));
     }
   }
 
@@ -1787,7 +1818,7 @@ module.exports = class VideoCardCollector extends Plugin {
   }
 
   renderConcepts(containerEl) {
-    containerEl.createEl('h3', { text: '分类类型' });
+    containerEl.createEl('h3', { text: T('分类类型', 'Classification types') });
     containerEl.createEl('p', {
       cls: 'setting-item-description',
       text: '点体名展开或收起它下面的面。',
@@ -1809,7 +1840,7 @@ module.exports = class VideoCardCollector extends Plugin {
       const head = box.createDiv();
       head.style.cursor = 'pointer';
       head.style.fontWeight = '600';
-      head.setText(`▸ ${e.name}（${e.facets.length} 个面）`);
+      head.setText(T(`▸ ${e.name}（${e.facets.length} 个面）`, `▸ ${e.name} (${e.facets.length} facets)`));
       const body = box.createDiv();
       body.style.display = 'none';
       body.style.paddingLeft = '16px';
@@ -1817,11 +1848,16 @@ module.exports = class VideoCardCollector extends Plugin {
       head.addEventListener('click', () => {
         const opened = body.style.display !== 'none';
         body.style.display = opened ? 'none' : 'block';
-        head.setText(`${opened ? '▸' : '▾'} ${e.name}（${e.facets.length} 个面）`);
+        head.setText(
+          T(
+            `${opened ? '▸' : '▾'} ${e.name}（${e.facets.length} 个面）`,
+            `${opened ? '▸' : '▾'} ${e.name} (${e.facets.length} facets)`
+          )
+        );
       });
       const fi = body.createEl('input', { cls: 'sfb-input', attr: { placeholder: '新面名称' } });
       fi.style.width = '100%';
-      const fb = body.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加面' });
+      const fb = body.createEl('button', { cls: 'sfb-add-topic', text: T('+ 添加面', '+ Add facet') });
       fb.addEventListener('click', async () => {
         const name = fi.value.trim();
         if (!name) return;
@@ -1848,11 +1884,11 @@ module.exports = class VideoCardCollector extends Plugin {
       });
     }
     if (!entities.length) {
-      box.createEl('p', { cls: 'setting-item-description', text: '还没有体。' });
+      box.createEl('p', { cls: 'setting-item-description', text: T('还没有体。', 'No bodies yet.') });
     }
     const input = box.createEl('input', { cls: 'sfb-input', attr: { placeholder: '新体名称' } });
     input.style.width = '100%';
-    const btn = box.createEl('button', { cls: 'sfb-add-topic', text: '+ 添加体' });
+    const btn = box.createEl('button', { cls: 'sfb-add-topic', text: T('+ 添加体', '+ Add body') });
     btn.addEventListener('click', async () => {
       const name = input.value.trim();
       if (!name) return;
