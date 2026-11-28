@@ -99,7 +99,7 @@ Two parallel sources, so if one breaks the other still works:
 
 ### Prerequisites
 
-- Obsidian **desktop** (1.4.0+). Mobile is not supported — the plugin uses Node's `http` module to open a local port.
+- Obsidian **desktop** (1.4.0+). The plugin opens a local port through Node's `http` module, so it only runs on a computer. Boards you've already written open fine on mobile — pan, drag, tap a card — you just can't collect there.
 - A Chromium-based browser (111+): Edge / Chrome / Brave / Vivaldi, etc.
 
 ### Step 1: Install the Obsidian plugin
@@ -307,7 +307,7 @@ Only the currently open one is scanned; open each folder in turn.
 
 **Platform redesigns can break it.** Douyin and Xiaohongshu change their page structures fairly often; the extension may need updates. Bilibili has a stable public interface and holds up better.
 
-**Desktop only.** The plugin needs Node's `http` module for the local port; Obsidian mobile can't run it.
+**Desktop only — for collecting.** The plugin needs Node's `http` module for the local port, which Obsidian mobile can't run, so new cards are captured on your computer only. Boards already written are unaffected: `.canvas` files and covers are ordinary vault files, so on your phone you can still open the board, drag cards around and tap one to jump back to the video.
 
 **Only 6 topic colors.** Obsidian Canvas natively supports red/orange/yellow/green/cyan/purple; with more topics colors repeat, so every card also carries a `#topic-name` line as backup.
 
